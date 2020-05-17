@@ -108,8 +108,10 @@ def test(vggish_model, class_model, G_model, test_loader, epoch):
 
 
     return 100. * correct / len(test_loader.dataset)
-
+import torchvision
+import os, time
 if __name__ == '__main__':
+    torchvision.datasets.MNIST(root='./data',download=True)# add for download mnist
     train_loader = torch.utils.data.DataLoader(
         MNIST(root='./data/mnist', train=True),
         batch_size=128, shuffle=True, num_workers=4, pin_memory=True)
@@ -144,9 +146,10 @@ if __name__ == '__main__':
         if best_prec < prec:
             best_prec = prec
 
-            save_state = {'vgg_layers': vggish_model.state_dict(),
-                          'class_layers': class_model.state_dict(),
-                          'gen_layers': G_model.state_dict(),
+            save_state = {'vgg_layers': vggish_model.cpu().state_dict(),
+                          'class_layers': class_model.cpu().state_dict(),
+                          'gen_layers': G_model.cpu().state_dict(),
                           'best_prec': best_prec}
+            time.sleep(10)
             torch.save(save_state, './save_models/train_all_emnist_mnist_best.pth')
 

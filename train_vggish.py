@@ -59,10 +59,15 @@ def test(model, test_loader):
             100. * correct / len(test_loader.dataset)))
 
     return 100. * correct / len(test_loader.dataset)
-
+import torchvision
+import os, time
 if __name__ == '__main__':
+    if not os.path.isdir('./save_models'):
+        os.mkdir('./save_models')
+    torchvision.datasets.MNIST(root='./data', train=True, download=True) # add for download
     train_loader = torch.utils.data.DataLoader(
         MNIST(root='./data/mnist', train=True),
+
         batch_size=128, shuffle=True, num_workers=4, pin_memory=True)
 
     test_loader = torch.utils.data.DataLoader(
@@ -83,8 +88,9 @@ if __name__ == '__main__':
         if best_prec < prec:
             best_prec = prec
 
-            save_state = {'shared_layers': model.state_dict(),
+            save_state = {'shared_layers': model.cpu().state_dict(),
                           'best_prec': best_prec}
             # pdb.set_trace()
+            time.sleep(10)
             torch.save(save_state, './save_models/vggish_mnist_best.pth')
 

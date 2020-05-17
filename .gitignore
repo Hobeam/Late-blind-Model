@@ -1,3 +1,6 @@
+# datasets
+data/
+
 # sftp file
 sftp-config.json
 
