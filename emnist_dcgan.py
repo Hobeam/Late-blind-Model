@@ -17,7 +17,7 @@ from datasets import EMNIST
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
+parser.add_argument('--workers', type=int, help='number of data loading workers', default=0)
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--imageSize', type=int, default=64, help='the height / width of the input image to network')
 parser.add_argument('--nz', type=int, default=100, help='size of the latent z vector')
@@ -54,10 +54,14 @@ if torch.cuda.is_available() and not opt.cuda:
 
 # data_loader
 transform = transforms.Compose([
-        transforms.Scale(opt.imageSize),
+        # transforms.Scale(opt.imageSize),
+        transforms.Resize((opt.imageSize,opt.imageSize)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+        transforms.Normalize(mean=(0.5,), std=(0.5,))
 ])
+#download emnist dset
+import torchvision
+# torchvision.datasets.EMNIST(root='./data', split='mnist', download=True)
 train_loader = torch.utils.data.DataLoader(
     EMNIST(root='./data/emnist', split='mnist', train=True, download=True, transform=transform),
     batch_size=opt.batchSize, shuffle=True, num_workers=int(opt.workers))
@@ -68,7 +72,7 @@ ngpu = int(opt.ngpu)
 nz = int(opt.nz)
 ngf = int(opt.ngf)
 ndf = int(opt.ndf)
-nc = 3
+nc = 1
 
 
 # custom weights initialization called on netG and netD
@@ -120,7 +124,7 @@ netG = Generator(ngpu).to(device)
 netG.apply(weights_init)
 if opt.netG != '':
     netG.load_state_dict(torch.load(opt.netG))
-print(netG)
+# print(netG)
 
 
 class Discriminator(nn.Module):
@@ -161,7 +165,7 @@ netD = Discriminator(ngpu).to(device)
 netD.apply(weights_init)
 if opt.netD != '':
     netD.load_state_dict(torch.load(opt.netD))
-print(netD)
+# print(netD)
 
 criterion = nn.BCELoss()
 
@@ -174,7 +178,7 @@ optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
 
 for epoch in range(opt.niter):
-    for i, data in enumerate(dataloader, 0):
+    for i, data in enumerate(train_loader, 0):
     # for i, (data, _) in enumerate(dataloader, 0):
 
         ############################
@@ -214,10 +218,10 @@ for epoch in range(opt.niter):
         D_G_z2 = output.mean().item()
         optimizerG.step()
 
-        print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
-              % (epoch, opt.niter, i, len(dataloader),
-                 errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
         if i % 100 == 0:
+            print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
+                  % (epoch, opt.niter, i, len(train_loader),
+                     errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
             vutils.save_image(real_cpu,
                     '%s/dcgan_emnist_real_samples.png' % opt.outf,
                     normalize=True)

@@ -80,6 +80,7 @@ if __name__ == '__main__':
     prec = test(model, test_loader)
     best_prec = 0
     for epoch in range(0, 5):
+        model.to(device)
         if epoch == 3:
             optimizer = optim.Adam(model.parameters(), lr=1e-5)
         train(model, train_loader, optimizer, epoch)
